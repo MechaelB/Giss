@@ -1,5 +1,6 @@
 ﻿using Giss.Functions;
 using Giss.Resources;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,6 +18,8 @@ namespace Giss
         public double latitude;
         public double longitude;
         public string sourceString;
+        public List<string> controlsList = new List<string>();
+        public List<string> imageList = new List<string>();
 
         public CreateF()
         {
@@ -29,13 +32,35 @@ namespace Giss
             this.latitude = latitude;
             this.longitude = longitude;
             this.sourceString = sourceString;
-
+            
         }
 
         private void btn_save_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.OK;
-            _=Connection.saveMark(this);
+
+            foreach(Control control in this.tabPage1.Controls)
+            {
+                if (control is TextBox)
+                {
+                    TextBox textBox = (TextBox)control;
+                    this.controlsList.Add(textBox.Text);
+                }
+                else if(control is DateTimePicker)
+                {
+                    DateTimePicker datePicker = (DateTimePicker)control;
+                    this.controlsList.Add(datePicker.Value.ToString());
+                }
+                else if(control is RichTextBox)
+                {
+                    RichTextBox textBox = (RichTextBox)control;
+                    this.controlsList.Add(textBox.Text);
+                }
+            }
+
+
+            _ =Connection.saveMark(this);
+
         }
 
         private void lb_aquifer_MouseHover(object sender, EventArgs e)
@@ -69,7 +94,27 @@ namespace Giss
 
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            DialogResult dialogResult = MessageBox.Show("Вы уверены что хотите\nдобавить графический файл?","Внимание!",MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                openFileDialog.Filter = "Изображения (*.jpg; *.jpeg; *.png; *.gif), Все файлы (*.*)|*.jpg; *.jpeg; *.png; *.gif; *.*";
+                openFileDialog.ShowDialog();
+            }
 
+            Button clickedButton = (Button)sender;
 
+            if (Convert.ToInt32(clickedButton.Tag.ToString().Substring(clickedButton.Tag.ToString().Length - 1)) < 3)
+            {
+
+            }
+            else
+            {
+
+            }
+
+        }
     }
 }

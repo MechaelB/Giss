@@ -105,15 +105,22 @@ namespace Giss
 
         private void gMapControl1_OnMapDoubleClick(PointLatLng pointClick, MouseEventArgs e)
         {
-            CreateF create = new CreateF(Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat)), Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng)),sourceString);
-            create.ShowDialog();
-
-            if (create.DialogResult == DialogResult.OK)
+            if (sourceString != "" && sourceString != null)
             {
-                GMarkerGoogle gMarker = new GMarkerGoogle(new PointLatLng(Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat)), Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng))), GMarkerGoogleType.blue_small);
-                Boreholes.Markers.Add(gMarker);
+                CreateF create = new CreateF(Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat)), Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng)), sourceString);
+                create.ShowDialog();
+
+                if (create.DialogResult == DialogResult.OK)
+                {
+                    GMarkerGoogle gMarker = new GMarkerGoogle(new PointLatLng(Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat)), Coords.CoordsDMSToDD(Coords.CoordsDDToDMS(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng))), GMarkerGoogleType.blue_small);
+                    Boreholes.Markers.Add(gMarker);
+                }
+                create.Dispose();
             }
-            create.Dispose();
+            else 
+            {
+                MessageBox.Show("Для начала работы с картой\nвыберите сервер подключения");
+            }
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -136,8 +143,18 @@ namespace Giss
 
         private void найтиСерверToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //Connection.DiscoverSqlServers(btn_server_find);
-            _=Main(progressBar,btn_server_find);
+            if(btn_server_find.DropDown.Items.Count != 0)
+            {
+                DialogResult dialog = MessageBox.Show("Начать поиск серверов для подключения занова?", "Внимание!", MessageBoxButtons.YesNo);
+                if(dialog == DialogResult.Yes)
+                {
+                    _ = Main(progressBar, btn_server_find);
+                }
+            }
+            else
+            {
+                _=Main(progressBar,btn_server_find);
+            }
         }
         
 

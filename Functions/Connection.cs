@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.SqlClient;
 using System.Runtime.CompilerServices;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Giss.Functions
 {
@@ -119,22 +120,10 @@ namespace Giss.Functions
 
         static public async Task saveMark(CreateF createF)
         {
-            string connectionString = $"Data Source= {createF.sourceString};Database=Passports;Trusted_Connection=True;";
-            string sqlExpression = "Insert into Address(Latitude,Longitude)  values(@Lat,@Lng)";
 
-            SqlConnection connection = new SqlConnection(connectionString);
-            {
-                await connection.OpenAsync();
 
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = sqlExpression;
-                command.Connection = connection;
-                command.Parameters.Add(new SqlParameter("@Lat", createF.latitude));
-                command.Parameters.Add(new SqlParameter("@Lng", createF.longitude));
-                await command.ExecuteNonQueryAsync();
-                connection.Close();
 
-            }
+            await PasportWrite(createF, createF.controlsList);
 
         }
 
@@ -162,48 +151,147 @@ namespace Giss.Functions
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
-        private async Task<List <SqlParameter>> AddressCheck(string addressString, string sourceString)
+        static public async Task PasportWrite(CreateF createF,List<string> values)
         {
-            //street,num,locality,area
 
-            string[] adress = addressString.Split(':',';');
-            if (string[0])
+            string sourceString = createF.sourceString;
+            List<SqlParameter> sqlParameters = new List<SqlParameter>();
+            string connectionString = $"Data Source={sourceString};Database=Passports;Trusted_Connection=True;";
+            int i = 0;
+
+            foreach (string value in values)
             {
+                    SqlParameter sql = new SqlParameter("@passportParameter" + i, value);
+                    sqlParameters.Add(sql);
+                    i++;
+            }
+            Task<SqlParameter> addressId = AddressWrite(createF);
+            SqlParameter idParam = await addressId;
+            sqlParameters.Add(idParam);
 
+            //SqlParameter idParameter = new SqlParameter();
+            //idParameter = await addressId;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    
+
+                    await connection.OpenAsync();
+                    SqlCommand command = connection.CreateCommand();
+                    command.CommandText = "Insert Into Passport(Cadastral_Number, Aquifers, Customer, Debit, Depth, Date, Notes, Address) VALUES(@passportParameter1,@passportParameter7,@passportParameter2,@passportParameter3,@passportParameter4,@passportParameter6,@passportParameter8, @id)";
+                    foreach (SqlParameter sqlParameter in sqlParameters)
+                    {
+                        command.Parameters.Add(sqlParameter);
+                    }
+                    await command.ExecuteNonQueryAsync();
+                    connection.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
 
+        }
+        
+        static private async Task<SqlParameter> AddressWrite(CreateF createF)
+        {//street,num,locality,area
+            string addressString = createF.tb_address.Text;
+            string sourceString = createF.sourceString;
             List<SqlParameter> sqlParameters = new List<SqlParameter>();
-
+            string[] adress = addressString.Split(':', ';');
+            int i = 0;
+            foreach (string adress_part in adress)
+            {
+                SqlParameter sql = new SqlParameter("@adress_part" + i, adress_part);
+                sqlParameters.Add(sql);
+                i++;
+            }
 
             string connectionString = $"Data Source={sourceString};Database=Passports;Trusted_Connection=True;";
-            using (SqlConnection connection = new SqlConnection(connectionString)) 
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 try
                 {
                     await connection.OpenAsync();
-
-
+                    SqlCommand command = connection.CreateCommand();
+                    command.CommandText = "Insert Into Address(Street, Plot_number, Locality, Area, Latitude,Longitude) VALUES(@adress_part0,@adress_part1,@adress_part2,@adress_part3,@Lat,@Lng);SET @id=SCOPE_IDENTITY()";
+                    foreach (SqlParameter sqlParameter in sqlParameters)
+                    {
+                        command.Parameters.Add(sqlParameter);
+                    }
+                    command.Parameters.Add(new SqlParameter("@Lat", createF.latitude));
+                    command.Parameters.Add(new SqlParameter("@Lng", createF.longitude));
+                    SqlParameter idParam = new SqlParameter
+                    {
+                        ParameterName = "@id",
+                        SqlDbType = SqlDbType.Int,
+                        Direction = ParameterDirection.Output // параметр выходной
+                    };
+                    command.Parameters.Add(idParam);
+                    await command.ExecuteNonQueryAsync();
+                    SqlParameter addresId = new SqlParameter(idParam.ParameterName,idParam.Value);
                     connection.Close();
-                }catch(Exception ex)
+                    return addresId;
+                }
+                catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    _ = MessageBox.Show(ex.Message);
+                    SqlParameter nullParameter = null;
+                    return nullParameter;
                 }
 
             }
-            
         }
-        private async Task CustomerCheck()
-        {
 
-        }
-        private async Task CadastralNumCheck()
-        {
+        //static private async Task<SqlParameter> ImageLoad(CreateF createF)
+        //{
+        //    string sourceString = createF.sourceString;
+        //    List<SqlParameter> sqlParameters = new List<SqlParameter>();
+        //    int i = 0;
+        //    foreach (string adress_part in )
+        //    {
+        //        SqlParameter sql = new SqlParameter("@adress_part" + i, adress_part);
+        //        sqlParameters.Add(sql);
+        //        i++;
+        //    }
 
-        }
-        private async Task ImageLoad()
-        {
-
-        }
+        //    string connectionString = $"Data Source={sourceString};Database=Passports;Trusted_Connection=True;";
+        //    using (SqlConnection connection = new SqlConnection(connectionString))
+        //    {
+        //        try
+        //        {
+        //            await connection.OpenAsync();
+        //            SqlCommand command = connection.CreateCommand();
+        //            command.CommandText = "Insert Into Address(Street, Plot_number, Locality, Area, Latitude,Longitude) VALUES(@adress_part0,@adress_part1,@adress_part2,@adress_part3,@Lat,@Lng);SET @id=SCOPE_IDENTITY()";
+        //            foreach (SqlParameter sqlParameter in sqlParameters)
+        //            {
+        //                command.Parameters.Add(sqlParameter);
+        //            }
+        //            command.Parameters.Add(new SqlParameter("@Lat", createF.latitude));
+        //            command.Parameters.Add(new SqlParameter("@Lng", createF.longitude));
+        //            SqlParameter idParam = new SqlParameter
+        //            {
+        //                ParameterName = "@id",
+        //                SqlDbType = SqlDbType.Int,
+        //                Direction = ParameterDirection.Output // параметр выходной
+        //            };
+        //            command.Parameters.Add(idParam);
+        //            await command.ExecuteNonQueryAsync();
+        //            SqlParameter addresId = new SqlParameter(idParam.ParameterName, idParam.Value);
+        //            connection.Close();
+        //            return addresId;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            _ = MessageBox.Show(ex.Message);
+        //            SqlParameter nullParameter = null;
+        //            return nullParameter;
+        //        }
+        //    }
+        //}
 
 
 
